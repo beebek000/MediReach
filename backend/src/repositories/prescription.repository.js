@@ -79,16 +79,38 @@ const prescriptionRepository = {
   },
 
   /**
-   * Get approved prescriptions for a user (for linking to orders).
+   * Get approved prescriptions for a user that haven't been used yet (for linking to orders).
    */
   async findApprovedByUserId(userId) {
     const { rows } = await query(
       `SELECT * FROM prescriptions
-       WHERE user_id = $1 AND status = 'approved'
+       WHERE user_id = $1 AND status = 'approved' AND (used = FALSE OR used IS NULL)
        ORDER BY created_at DESC`,
       [userId]
     );
     return rows;
+  },
+
+  /**
+   * Mark a prescription as used (after successful checkout).
+   */
+  async markUsed(id) {
+    const { rows } = await query(
+      'UPDATE prescriptions SET used = TRUE, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Mark a prescription as unused (when order is cancelled).
+   */
+  async markUnused(id) {
+    const { rows } = await query(
+      'UPDATE prescriptions SET used = FALSE, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return rows[0] || null;
   },
 };
 

@@ -18,6 +18,14 @@ import RegisterPage from "./pages/public/RegisterPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 
+import AboutPage from "./pages/public/static/AboutPage";
+import PartnerPharmaciesPage from "./pages/public/static/PartnerPharmaciesPage";
+import ContactPage from "./pages/public/static/ContactPage";
+import FAQsPage from "./pages/public/static/FAQsPage";
+import DeliveryInfoPage from "./pages/public/static/DeliveryInfoPage";
+import PrivacyPolicyPage from "./pages/public/static/PrivacyPolicyPage";
+import TermsOfUsePage from "./pages/public/static/TermsOfUsePage";
+
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import MedicineCatalog from "./pages/customer/MedicineCatalog";
 import MedicineDetailPage from "./pages/customer/MedicineDetailPage";
@@ -26,8 +34,9 @@ import PrescriptionUploadPage from "./pages/customer/PrescriptionUploadPage";
 import OrderTrackingPage from "./pages/customer/OrderTrackingPage";
 import MyOrdersPage from "./pages/customer/MyOrdersPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
-import ImepaySuccessPage from "./pages/customer/ImepaySuccessPage";
-import ImepayFailurePage from "./pages/customer/ImepayFailurePage";
+import EsewaSuccessPage from "./pages/customer/EsewaSuccessPage";
+import EsewaFailurePage from "./pages/customer/EsewaFailurePage";
+import EsewaMockCheckoutPage from "./pages/customer/EsewaMockCheckoutPage";
 import WishlistPage from "./pages/customer/WishlistPage";
 
 import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
@@ -40,6 +49,7 @@ import AnalyticsPage from "./pages/admin/AnalyticsPage";
 import UserManagementPage from "./pages/admin/UserManagementPage";
 import MedicineManagementPage from "./pages/admin/MedicineManagementPage";
 import AllOrdersPage from "./pages/admin/AllOrdersPage";
+import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
 
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -47,6 +57,13 @@ const router = createBrowserRouter([
   { path: "/register", element: <RegisterPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
+  { path: "/about", element: <AboutPage /> },
+  { path: "/partners", element: <PartnerPharmaciesPage /> },
+  { path: "/contact", element: <ContactPage /> },
+  { path: "/faqs", element: <FAQsPage /> },
+  { path: "/delivery", element: <DeliveryInfoPage /> },
+  { path: "/privacy", element: <PrivacyPolicyPage /> },
+  { path: "/terms", element: <TermsOfUsePage /> },
 
   {
     path: "/medicines",
@@ -112,14 +129,19 @@ const router = createBrowserRouter([
         handle: { title: "My Wishlist" },
       },
       {
-        path: "payment/imepay/success",
-        element: <ImepaySuccessPage />,
-        handle: { title: "IME Pay Payment" },
+        path: "payment/esewa/success",
+        element: <EsewaSuccessPage />,
+        handle: { title: "eSewa Payment" },
       },
       {
-        path: "payment/imepay/failure",
-        element: <ImepayFailurePage />,
-        handle: { title: "IME Pay Payment" },
+        path: "payment/esewa/failure",
+        element: <EsewaFailurePage />,
+        handle: { title: "eSewa Payment" },
+      },
+      {
+        path: "payment/esewa/mock-checkout",
+        element: <EsewaMockCheckoutPage />,
+        handle: { title: "eSewa Checkout" },
       },
     ],
   },
@@ -127,7 +149,7 @@ const router = createBrowserRouter([
   {
     path: "/pharmacist",
     element: (
-      <ProtectedRoute allowedRoles={[ROLES.PHARMACIST]}>
+      <ProtectedRoute allowedRoles={[ROLES.PHARMACIST, ROLES.ADMIN]}>
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -192,6 +214,11 @@ const router = createBrowserRouter([
         path: "orders",
         element: <AllOrdersPage />,
         handle: { title: "All Orders" },
+      },
+      {
+        path: "messages",
+        element: <AdminMessagesPage />,
+        handle: { title: "Support Messages" },
       },
       {
         path: "profile",

@@ -1,32 +1,32 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
 
-export default function ImepaySuccessPage() {
+export default function StripeSuccessPage() {
   const [searchParams] = useSearchParams();
   const { accessToken } = useAuth();
   const { addToast } = useToast();
-  const [status, setStatus] = useState('verifying'); // verifying | success | failed
-  const [orderId, setOrderId] = useState(null);
+  const [status, setStatus] = useState('verifying');
   const calledRef = useRef(false);
 
   useEffect(() => {
     if (calledRef.current) return;
     calledRef.current = true;
 
-    const data = searchParams.get('data');
-    if (!data) {
+    const sessionId = searchParams.get('session_id');
+    const orderId = searchParams.get('orderId');
+
+    if (!sessionId || !orderId) {
       setStatus('failed');
-      addToast('Missing IME Pay payment data', 'error');
+      addToast('Missing Stripe payment details', 'error');
       return;
     }
 
-    api.verifyImepay({ data }, accessToken)
-      .then((res) => {
+    api.verifyStripe({ orderId, sessionId }, accessToken)
+      .then(() => {
         setStatus('success');
-        setOrderId(res.data?.orderId);
         addToast('Payment verified successfully!');
       })
       .catch((err) => {
@@ -40,7 +40,7 @@ export default function ImepaySuccessPage() {
       <div className="max-w-md mx-auto text-center py-16 page-enter">
         <div className="text-5xl mb-4 animate-pulse">⏳</div>
         <h2 className="font-fraunces text-2xl font-semibold text-charcoal">Verifying payment…</h2>
-        <p className="text-charcoal/60 mt-2">Please wait while we confirm your IME Pay payment.</p>
+        <p className="text-charcoal/60 mt-2">Please wait while we confirm your Stripe payment.</p>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function ImepaySuccessPage() {
       <div className="max-w-md mx-auto text-center py-16 page-enter">
         <div className="text-5xl mb-4">✅</div>
         <h2 className="font-fraunces text-2xl font-semibold text-charcoal">Payment successful!</h2>
-        <p className="text-charcoal/60 mt-2">Your IME Pay payment has been verified. Your order is being processed.</p>
+        <p className="text-charcoal/60 mt-2">Your card payment has been verified. Your order is being processed.</p>
         <div className="flex gap-3 justify-center mt-6">
           <Link to="/customer/orders" className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark">
             View My Orders
@@ -67,7 +67,7 @@ export default function ImepaySuccessPage() {
     <div className="max-w-md mx-auto text-center py-16 page-enter">
       <div className="text-5xl mb-4">❌</div>
       <h2 className="font-fraunces text-2xl font-semibold text-charcoal">Payment verification failed</h2>
-      <p className="text-charcoal/60 mt-2">We couldn't verify your IME Pay payment. If money was deducted, it will be refunded automatically.</p>
+      <p className="text-charcoal/60 mt-2">We couldn't verify your Stripe payment yet. Please check your orders and try again.</p>
       <div className="flex gap-3 justify-center mt-6">
         <Link to="/customer/orders" className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark">
           View My Orders

@@ -14,7 +14,13 @@ const {
   verifyResetToken,
   parseDuration,
 } = require('../utils/jwt');
-const { sendPasswordResetEmail, sendPasswordResetCode } = require('../utils/email');
+const {
+  sendPasswordResetEmail,
+  sendPasswordResetCode,
+  sendWelcomeEmail,
+  sendProfileUpdateEmail,
+  sendPasswordChangedEmail,
+} = require('../utils/email');
 const {
   BadRequestError,
   UnauthorizedError,
@@ -51,6 +57,9 @@ const authService = {
       phone,
       address,
     });
+
+    // Send welcome email (fire and forget)
+    sendWelcomeEmail(user.email, user.name).catch(console.error);
 
     return user;
   },
@@ -182,6 +191,12 @@ const authService = {
     const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await userRepository.updatePassword(userId, hashed);
 
+    // Send confirmation email
+    console.log(`Sending password change email to ${user.email} (${user.name})`);
+    sendPasswordChangedEmail(user.email, user.name)
+      .then(() => console.log('Password change email sent successfully'))
+      .catch(err => console.error('Failed to send password change email:', err));
+
     // Revoke all refresh tokens so user must re-login
     await tokenRepository.revokeAllForUser(userId);
   },
@@ -270,6 +285,15 @@ const authService = {
 
     // Mark token as used
     await resetTokenRepository.markUsed(record.id);
+
+    // Fetch user for email
+    const user = await userRepository.findById(userId);
+    if (user) {
+      console.log(`Sending password reset confirmation email to ${user.email} (${user.name})`);
+      sendPasswordChangedEmail(user.email, user.name)
+        .then(() => console.log('Password reset confirmation email sent successfully'))
+        .catch(err => console.error('Failed to send password reset confirmation email:', err));
+    }
 
     // Revoke all refresh tokens so user must re-login
     await tokenRepository.revokeAllForUser(userId);
@@ -392,6 +416,19 @@ const authService = {
     const user = await userRepository.findById(userId);
     if (!user) throw new NotFoundError('User not found');
     return user;
+  },
+
+  // ──────────────────────────────────────────────────────────────── UPDATE PROFILE
+  async updateProfile(userId, data) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw new NotFoundError('User not found');
+
+    const updated = await userRepository.updateProfile(userId, data);
+    
+    // Send confirmation email
+    sendProfileUpdateEmail(updated.email, updated.name).catch(console.error);
+
+    return updated;
   },
 };
 

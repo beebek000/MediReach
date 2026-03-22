@@ -1,20 +1,19 @@
 import { Link } from "react-router-dom";
-import logo from "../../assets/images/logo2.png";
+import logo from '../../assets/images/logo.png';
 
 const footerLinks = {
   company: [
-    { label: "About Us", to: "#" },
-    { label: "Careers", to: "#" },
-    { label: "Partner Pharmacies", to: "#" },
+    { label: "About Us", to: "/about" },
+    { label: "Partner Pharmacies", to: "/partners" },
   ],
   support: [
-    { label: "Contact", to: "#" },
-    { label: "FAQs", to: "#" },
-    { label: "Delivery Info", to: "#" },
+    { label: "Contact", to: "/contact" },
+    { label: "FAQs", to: "/faqs" },
+    { label: "Delivery Info", to: "/delivery" },
   ],
   legal: [
-    { label: "Privacy Policy", to: "#" },
-    { label: "Terms of Use", to: "#" },
+    { label: "Privacy Policy", to: "/privacy" },
+    { label: "Terms of Use", to: "/terms" },
   ],
 };
 
@@ -32,15 +31,8 @@ export default function Footer({ variant = "light" }) {
       <div className="max-w-6xl mx-auto px-4 py-10 lg:py-12 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-1 sm:col-span-2 md:col-span-1 flex flex-col items-center md:items-start text-center md:text-left">
-            <Link
-              to="/"
-              className="inline-block mb-3 transition-transform hover:scale-105"
-            >
-              <img
-                src={logo}
-                alt="MediReach Logo"
-                className="h-16 sm:h-20 w-auto bg-white p-2 rounded-2xl shadow-sm"
-              />
+            <Link to="/" className="inline-block mb-3 transition-transform hover:scale-105">
+              <img src={logo} alt="MediReach Logo" className="h-16 sm:h-20 w-auto" />
             </Link>
             <p
               className={`mt-2 text-sm ${isDark ? "text-cream/70" : "text-charcoal/60"}`}
@@ -57,12 +49,12 @@ export default function Footer({ variant = "light" }) {
             <ul className="mt-3 space-y-2">
               {footerLinks.company.map((item) => (
                 <li key={item.label}>
-                  <a
-                    href={item.to}
+                  <Link
+                    to={item.to}
                     className={`text-sm hover:text-primary transition-colors ${isDark ? "text-cream/70" : "text-charcoal/60"}`}
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -76,12 +68,12 @@ export default function Footer({ variant = "light" }) {
             <ul className="mt-3 space-y-2">
               {footerLinks.support.map((item) => (
                 <li key={item.label}>
-                  <a
-                    href={item.to}
+                  <Link
+                    to={item.to}
                     className={`text-sm hover:text-primary transition-colors ${isDark ? "text-cream/70" : "text-charcoal/60"}`}
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -111,13 +103,13 @@ export default function Footer({ variant = "light" }) {
           </p>
           <div className="flex gap-6">
             {footerLinks.legal.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.to}
+                to={item.to}
                 className={`text-sm hover:text-primary transition-colors ${isDark ? "text-cream/60" : "text-charcoal/50"}`}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

@@ -47,6 +47,9 @@ export const api = {
 
   getProfile: (token) => request("/auth/me", { token }),
 
+  updateProfile: (body, token) =>
+    request("/auth/profile", { method: "PATCH", body, token }),
+
   changePassword: (body, token) =>
     request("/auth/change-password", { method: "POST", body, token }),
 
@@ -148,11 +151,11 @@ export const api = {
     request(`/orders/${id}/cancel`, { method: "POST", token }),
 
   // ─── Payments ───
-  initiateImepay: (body, token) =>
-    request("/payments/imepay/initiate", { method: "POST", body, token }),
+  initiateEsewa: (body, token) =>
+    request("/payments/esewa/initiate", { method: "POST", body, token }),
 
-  verifyImepay: (body, token) =>
-    request("/payments/imepay/verify", { method: "POST", body, token }),
+  verifyEsewa: (encodedData, token) =>
+    request(`/payments/esewa/verify?data=${encodeURIComponent(encodedData)}`, { token }),
 
   getOrderPayments: (orderId, token) =>
     request(`/payments/order/${orderId}`, { token }),
@@ -205,6 +208,13 @@ export const api = {
       method: "POST",
       body: { audio, language },
     }),
+
+  // ─── Contact ───
+  submitContactMessage: (body) => request("/contact", { method: "POST", body }),
+  adminGetContactMessages: (page = 1, limit = 20, token) =>
+    request(`/contact?page=${page}&limit=${limit}`, { token }),
+  adminUpdateContactStatus: (id, status, token) =>
+    request(`/contact/${id}/status`, { method: "PATCH", body: { status }, token }),
 };
 
 export default api;

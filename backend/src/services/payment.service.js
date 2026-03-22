@@ -1,27 +1,38 @@
 /**
- * Payment Service — business logic for COD and IME Pay payments.
+ * Payment Service — business logic for COD and eSewa payments.
  *
- * IME Pay flow:
- *   1. Frontend calls POST /api/payments/imepay/initiate → gets form data
- *   2. Frontend submits form to IME Pay
- *   3. IME Pay redirects to success/failure URL with response data
- *   4. Frontend calls POST /api/payments/imepay/verify with the response data
+ * eSewa flow:
+ *   1. Frontend calls POST /api/payments/esewa/initiate
+ *      → backend returns signed form data for eSewa checkout
+ *   2. Frontend submits form to eSewa checkout URL
+ *   3. eSewa redirects to success/failure URL with base64-encoded `data` param
+ *   4. Frontend calls GET /api/payments/esewa/verify?data=...
+ *      → backend verifies signature and transaction status
  *
  * COD flow:
  *   1. Checkout sets paymentMethod = 'cod' and paymentStatus = 'pending'
  *   2. On delivery, admin marks order delivered → payment status becomes 'paid'
  */
 
-const crypto = require("crypto");
-const axios = require("axios");
-const config = require("../config");
-const paymentRepository = require("../repositories/payment.repository");
-const orderRepository = require("../repositories/order.repository");
+const crypto = require('crypto');
+const config = require('../config');
+const paymentRepository = require('../repositories/payment.repository');
+const orderRepository = require('../repositories/order.repository');
 const {
   BadRequestError,
   NotFoundError,
   ConflictError,
-} = require("../utils/errors");
+} = require('../utils/errors');
+
+/* ================================================================
+   HELPER: generate eSewa Signature
+   ================================================================ */
+function generateEsewaSignature(secretKey, dataString) {
+  return crypto
+    .createHmac('sha256', secretKey)
+    .update(dataString)
+    .digest('base64');
+}
 
 /* ================================================================
    HELPER: generate idempotency key for a payment attempt
@@ -30,144 +41,203 @@ function makeIdempotencyKey(orderId, method) {
   return `${orderId}:${method}:${Date.now()}`;
 }
 
-/* ================================================================
-   Payment Service
-   ================================================================ */
+function parseAmount(value) {
+  return Number.parseFloat(value).toFixed(2);
+}
+
 const paymentService = {
   /* ──────────────────────────────────────────────── COD ─────────── */
-
-  /**
-   * For COD, we simply create a pending payment record.
-   * Called automatically during checkout if paymentMethod === 'cod'.
-   */
   async createCodPayment(orderId, amount) {
     const existing = await paymentRepository.findByOrderId(orderId);
-    const alreadyPaid = existing.find((p) => p.status === "success");
-    if (alreadyPaid) throw new ConflictError("Order already paid");
+    const alreadyPaid = existing.find((p) => p.status === 'success');
+    if (alreadyPaid) throw new ConflictError('Order already paid');
 
     return paymentRepository.create({
       orderId,
-      method: "cod",
+      method: 'cod',
       amount,
-      status: "pending",
-      idempotencyKey: makeIdempotencyKey(orderId, "cod"),
+      status: 'pending',
+      idempotencyKey: makeIdempotencyKey(orderId, 'cod'),
     });
   },
 
-  /**
-   * Mark COD payment as paid (called when order is delivered).
-   */
   async markCodPaid(orderId) {
     const payments = await paymentRepository.findByOrderId(orderId);
-    const codPayment = payments.find(
-      (p) => p.method === "cod" && p.status === "pending",
-    );
-    if (!codPayment) throw new NotFoundError("No pending COD payment found");
+    const codPayment = payments.find((p) => p.method === 'cod' && p.status === 'pending');
+    if (!codPayment) throw new NotFoundError('No pending COD payment found');
 
     await paymentRepository.updateStatus(codPayment.id, {
-      status: "success",
+      status: 'success',
       transactionId: `COD-${orderId.slice(0, 8)}`,
     });
 
-    await orderRepository.updatePaymentStatus(orderId, "paid");
-    return { message: "COD payment marked as paid" };
+    await orderRepository.updatePaymentStatus(orderId, 'paid');
+    return { message: 'COD payment marked as paid' };
   },
 
-  /* ─────────────────────────────── IME Pay ───────────────────────── */
+  /* ──────────────────────────────────────────────── eSewa ───────── */
 
   /**
-   * Build the form data the frontend needs to POST to IME Pay.
+   * Initiate eSewa payment.
+   * Generates signature and returns form data for frontend to submit.
    */
-  async initiateImepay(orderId, userId) {
+  async initiateEsewa(orderId, userId) {
     const order = await orderRepository.findById(orderId);
-    if (!order) throw new NotFoundError("Order not found");
-    if (order.user_id !== userId) throw new BadRequestError("Access denied");
-    if (order.payment_method !== "imepay") {
-      throw new BadRequestError("Order payment method is not IME Pay");
+    if (!order) throw new NotFoundError('Order not found');
+    if (order.user_id !== userId) throw new BadRequestError('Access denied');
+    if (order.payment_method !== 'esewa') {
+      throw new BadRequestError('Order payment method is not eSewa');
     }
-    if (order.payment_status === "paid") {
-      throw new ConflictError("Order is already paid");
+    if (order.payment_status === 'paid') {
+      throw new ConflictError('Order already paid');
     }
 
-    const amount = parseFloat(order.grand_total);
-    const transactionId = `IMP-${order.id.slice(0, 8)}-${Date.now()}`;
+    const { productCode, secretKey, initiateUrl } = config.esewa;
+    const transactionUuid = `${order.id.slice(0, 8)}-${Date.now()}`;
+    const totalAmount = parseAmount(order.grand_total);
 
-    // Create pending payment record
-    const idempotencyKey = makeIdempotencyKey(orderId, "imepay");
+    // Generate Signature: total_amount=X,transaction_uuid=Y,product_code=Z
+    const dataString = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${productCode}`;
+    const signature = generateEsewaSignature(secretKey, dataString);
+
+    // Persist pending payment
+    const idempotencyKey = makeIdempotencyKey(orderId, 'esewa');
     await paymentRepository.create({
       orderId,
-      method: "imepay",
-      amount,
-      status: "pending",
-      transactionId,
+      method: 'esewa',
+      amount: order.grand_total,
+      status: 'pending',
+      transactionId: transactionUuid,
       idempotencyKey,
     });
 
-    // Return data for frontend to submit as an HTML form to IME Pay
+    if (config.esewa.mock) {
+      return {
+        paymentUrl: `${config.clientUrl}/customer/payment/esewa/mock-checkout`,
+        formData: {
+          amount: totalAmount,
+          tax_amount: '0',
+          total_amount: totalAmount,
+          transaction_uuid: transactionUuid,
+          product_code: productCode,
+          product_service_charge: '0',
+          product_delivery_charge: '0',
+          success_url: `${config.clientUrl}/customer/payment/esewa/success`,
+          failure_url: `${config.clientUrl}/customer/payment/esewa/failure`,
+          signed_field_names: 'total_amount,transaction_uuid,product_code',
+          signature,
+        },
+        mock: true,
+      };
+    }
+
     return {
-      paymentUrl: "https://payment.imepay.com.np/web/payment",
+      paymentUrl: initiateUrl,
       formData: {
-        MerchantId: config.imepay.merchantId,
-        Amount: amount,
-        RefId: transactionId,
-        SuccessUrl: `${config.clientUrl}/customer/payment/imepay/success`,
-        FailureUrl: `${config.clientUrl}/customer/payment/imepay/failure`,
-        // Add other required IME Pay fields as needed
+        amount: totalAmount,
+        tax_amount: '0',
+        total_amount: totalAmount,
+        transaction_uuid: transactionUuid,
+        product_code: productCode,
+        product_service_charge: '0',
+        product_delivery_charge: '0',
+        success_url: `${config.clientUrl}/customer/payment/esewa/success`,
+        failure_url: `${config.clientUrl}/customer/payment/esewa/failure`,
+        signed_field_names: 'total_amount,transaction_uuid,product_code',
+        signature,
       },
     };
   },
 
   /**
-   * Verify IME Pay payment callback.
-   * The frontend receives response data from IME Pay and POSTs it here.
+   * Verify eSewa payment callback.
+   * eSewa redirects to success_url with a base64 encoded 'encodedData' string.
    */
-  async verifyImepay(responseData) {
-    // Find the payment record using the RefId from IME Pay response
-    const transactionId = responseData.RefId;
-    const payment = await paymentRepository.findByTransactionId(transactionId);
-    if (!payment) throw new NotFoundError("Payment record not found");
-
-    // Idempotency: already processed?
-    if (payment.status === "success") {
-      return { message: "Payment already verified", orderId: payment.order_id };
+  async verifyEsewa(encodedData) {
+    let decoded;
+    try {
+      const json = Buffer.from(encodedData, 'base64').toString('utf-8');
+      decoded = JSON.parse(json);
+    } catch {
+      throw new BadRequestError('Invalid eSewa response data');
     }
 
-    // Verify payment status from IME Pay response
-    if (responseData.Status === "SUCCESS") {
-      await paymentRepository.updateStatus(payment.id, {
-        status: "success",
-        providerRef: transactionId,
-        providerResponse: responseData,
-      });
-      await orderRepository.updatePaymentStatus(payment.order_id, "paid");
+    const {
+      transaction_uuid,
+      total_amount,
+      status,
+      signature,
+      transaction_code,
+      signed_field_names,
+    } = decoded;
+    const { productCode, secretKey } = config.esewa;
 
-      // If order was pending, move to verified
-      const order = await orderRepository.findById(payment.order_id);
-      if (order && order.status === "pending") {
-        await orderRepository.updateStatus(payment.order_id, "verified");
+    if (!transaction_uuid || !total_amount || !status || !signature) {
+      throw new BadRequestError('Incomplete eSewa response data');
+    }
+
+    const signedFieldNames =
+      signed_field_names ||
+      'transaction_code,status,total_amount,transaction_uuid,product_code';
+    const dataString =
+      `transaction_code=${transaction_code || ''},status=${status},total_amount=${total_amount},` +
+      `transaction_uuid=${transaction_uuid},product_code=${productCode},signed_field_names=${signedFieldNames}`;
+    const expectedSignature = generateEsewaSignature(secretKey, dataString);
+
+    if (signature !== expectedSignature && !config.esewa.mock) {
+      throw new BadRequestError('eSewa signature verification failed');
+    }
+
+    const payment = await paymentRepository.findByTransactionId(transaction_uuid);
+    if (!payment) throw new NotFoundError('Payment record not found');
+    if (payment.status === 'success') return { message: 'Payment already verified', orderId: payment.order_id };
+
+    if (status === 'COMPLETE' || config.esewa.mock) {
+      if (!config.esewa.mock) {
+        const url = new URL(config.esewa.statusUrl);
+        url.searchParams.set('product_code', productCode);
+        url.searchParams.set('total_amount', total_amount);
+        url.searchParams.set('transaction_uuid', transaction_uuid);
+
+        const statusRes = await fetch(url.toString(), {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!statusRes.ok) {
+          throw new BadRequestError('Unable to validate eSewa payment status');
+        }
+
+        const statusPayload = await statusRes.json().catch(() => null);
+        if (!statusPayload || statusPayload.status !== 'COMPLETE') {
+          throw new BadRequestError('eSewa transaction is not complete');
+        }
       }
 
-      return {
-        message: "IME Pay payment verified successfully",
-        orderId: payment.order_id,
-      };
+      await paymentRepository.updateStatus(payment.id, {
+        status: 'success',
+        providerRef: transaction_code || transaction_uuid,
+        providerResponse: decoded,
+      });
+      await orderRepository.updatePaymentStatus(payment.order_id, 'paid');
+
+      const order = await orderRepository.findById(payment.order_id);
+      if (order && order.status === 'pending') {
+        await orderRepository.updateStatus(payment.order_id, 'verified');
+      }
+
+      return { message: 'Payment verified successfully', orderId: payment.order_id };
     }
 
-    // Payment failed
     await paymentRepository.updateStatus(payment.id, {
-      status: "failed",
-      providerResponse: responseData,
+      status: 'failed',
+      providerResponse: decoded,
     });
-    await orderRepository.updatePaymentStatus(payment.order_id, "failed");
-
-    throw new BadRequestError("IME Pay payment was not completed");
+    await orderRepository.updatePaymentStatus(payment.order_id, 'failed');
+    throw new BadRequestError(`eSewa payment ${status}`);
   },
 
   /* ──────────────────────────────────────────── Shared ──────────── */
-
-  /**
-   * Get payment records for an order.
-   */
   async getOrderPayments(orderId) {
     const payments = await paymentRepository.findByOrderId(orderId);
     return payments.map((p) => ({
@@ -184,3 +254,4 @@ const paymentService = {
 };
 
 module.exports = paymentService;
+

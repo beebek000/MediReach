@@ -57,7 +57,7 @@ const features = [
   {
     icon: "💳",
     title: "Flexible Payment",
-    desc: "Pay via COD or IME Pay — your choice.",
+    desc: "Pay via COD or eSewa — your choice.",
   },
   {
     icon: "📞",
@@ -102,7 +102,7 @@ export default function LandingPage() {
       {/* Navbar omitted, using CustomerNavbar in full app flow but keeping this for standalone */}
       <nav className="absolute top-0 w-full z-40 flex items-center justify-between px-4 py-6 lg:px-10">
         <Link to="/" className="flex items-center shrink-0">
-          <img src={logo} alt="MediReach Logo" className="h-16 md:h-20 w-auto bg-white p-2 rounded-2xl shadow-md" />
+          <img src={logo} alt="MediReach Logo" className="h-16 md:h-20 w-auto" />
         </Link>
         <div className="flex items-center">
           <Link to="/medicines" className="text-base font-medium text-white/90 hover:text-white transition-colors drop-shadow-sm hover-underline-animation">

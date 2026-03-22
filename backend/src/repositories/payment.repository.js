@@ -101,6 +101,64 @@ const paymentRepository = {
     );
     return rows[0] || null;
   },
+
+  /**
+   * Find webhook event by provider event ID.
+   */
+  async findWebhookEventByProviderEventId(providerEventId) {
+    const { rows } = await query(
+      'SELECT * FROM payment_webhook_events WHERE provider_event_id = $1',
+      [providerEventId]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Create webhook event if not already present.
+   * Returns inserted row, or null on duplicate.
+   */
+  async createWebhookEventIfNotExists({ provider, providerEventId, eventType, payload }) {
+    const { rows } = await query(
+      `INSERT INTO payment_webhook_events
+         (provider, provider_event_id, event_type, status, payload)
+       VALUES ($1, $2, $3, 'received', $4)
+       ON CONFLICT (provider_event_id) DO NOTHING
+       RETURNING *`,
+      [provider, providerEventId, eventType, payload ? JSON.stringify(payload) : null]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Mark webhook event as processed or ignored.
+   */
+  async markWebhookEventProcessed(providerEventId, status = 'processed') {
+    const { rows } = await query(
+      `UPDATE payment_webhook_events
+       SET status = $1,
+           processed_at = NOW(),
+           error_message = NULL
+       WHERE provider_event_id = $2
+       RETURNING *`,
+      [status, providerEventId]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Mark webhook event as failed and store error message.
+   */
+  async markWebhookEventFailed(providerEventId, errorMessage) {
+    const { rows } = await query(
+      `UPDATE payment_webhook_events
+       SET status = 'failed',
+           error_message = $2
+       WHERE provider_event_id = $1
+       RETURNING *`,
+      [providerEventId, errorMessage || null]
+    );
+    return rows[0] || null;
+  },
 };
 
 module.exports = paymentRepository;

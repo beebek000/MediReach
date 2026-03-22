@@ -2,10 +2,11 @@
  * Order Service — business logic for checkout & order lifecycle.
  */
 
-const { getClient } = require('../database/db');
+const { getClient, pool } = require('../database/db');
 const cartRepository = require('../repositories/cart.repository');
 const orderRepository = require('../repositories/order.repository');
 const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
+const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../utils/email');
 
 const TAX_RATE = 0.13;
 const DELIVERY_FEE = 100;
@@ -109,6 +110,11 @@ const orderService = {
             `Prescription is "${rxRows[0].status}". Only approved prescriptions can be used for checkout.`
           );
         }
+        if (rxRows[0].used) {
+          throw new BadRequestError(
+            'This prescription has already been used for another order. Please upload a new prescription.'
+          );
+        }
       }
 
       // 4. Validate stock & build order items
@@ -173,6 +179,14 @@ const orderService = {
       // 11. Clear cart
       await client.query('DELETE FROM cart_items WHERE cart_id = $1', [cart.id]);
 
+      // 11b. Mark prescription as used so it cannot be reused
+      if (prescriptionId) {
+        await client.query(
+          'UPDATE prescriptions SET used = TRUE, updated_at = NOW() WHERE id = $1',
+          [prescriptionId]
+        );
+      }
+
       // 12. If COD, create a pending payment record inside the transaction
       if (paymentMethod === 'cod') {
         await client.query(
@@ -185,8 +199,19 @@ const orderService = {
 
       await client.query('COMMIT');
 
-      // Return formatted order
-      return formatOrder(order);
+      const formattedOrder = formatOrder(order);
+
+      // Fire-and-forget confirmation email — never blocks the response
+      pool.query('SELECT email, name FROM users WHERE id = $1', [userId])
+        .then(({ rows }) => {
+          const userRow = rows[0];
+          if (userRow?.email) {
+            return sendOrderConfirmationEmail(userRow.email, formattedOrder, orderItems);
+          }
+        })
+        .catch((emailErr) => console.error('Order confirmation email failed:', emailErr.message));
+
+      return formattedOrder;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -283,7 +308,19 @@ const orderService = {
     }
 
     const updated = await orderRepository.updateStatus(orderId, newStatus);
-    return formatOrder(updated);
+    const formattedUpdated = formatOrder(updated);
+
+    // Fire-and-forget status update email
+    pool.query('SELECT email FROM users WHERE id = $1', [order.user_id])
+      .then(({ rows }) => {
+        const userRow = rows[0];
+        if (userRow?.email) {
+          return sendOrderStatusUpdateEmail(userRow.email, order.order_number, newStatus);
+        }
+      })
+      .catch((emailErr) => console.error('Order status email failed:', emailErr.message));
+
+    return formattedUpdated;
   },
 
   /**
@@ -318,6 +355,14 @@ const orderService = {
         "UPDATE orders SET status = 'cancelled' WHERE id = $1",
         [orderId]
       );
+
+      // Restore prescription so it can be reused
+      if (order.prescription_id) {
+        await client.query(
+          'UPDATE prescriptions SET used = FALSE, updated_at = NOW() WHERE id = $1',
+          [order.prescription_id]
+        );
+      }
 
       await client.query('COMMIT');
     } catch (err) {

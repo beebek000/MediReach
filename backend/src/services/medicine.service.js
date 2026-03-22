@@ -14,14 +14,11 @@ function formatMedicine(row) {
     genericName: row.generic_name,
     category: row.category,
     manufacturer: row.manufacturer,
-    brand: row.manufacturer,                   // alias used by frontend
     requiresPrescription: row.requires_prescription,
-    prescriptionRequired: row.requires_prescription, // alias used by frontend
     price: parseFloat(row.price),
     stock: row.stock,
     description: row.description,
     imageUrl: row.image_url,
-    expiry: row.expiry_date,                    // alias used by frontend
     expiryDate: row.expiry_date,
     soldCount: row.sold_count,
     createdAt: row.created_at,

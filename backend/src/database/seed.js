@@ -57,7 +57,7 @@ const seed = async () => {
          requires_prescription, price, stock, description,
          image_url, expiry_date, sold_count)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-      ON CONFLICT DO NOTHING`;
+      ON CONFLICT (name) DO NOTHING`;
 
     for (const m of medicines) {
       await client.query(insertMedicine, [

@@ -104,8 +104,8 @@ export default function MedicineCatalog() {
           <button
             type="button"
             onClick={() => setCategory('')}
-            className={`whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-medium transition-all duration-300 ${
-              !category ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-charcoal/70 hover:bg-white/50'
+            className={`whitespace-nowrap relative px-5 py-2.5 text-sm font-medium transition-colors ${
+              !category ? 'text-primary after:content-[""] after:absolute after:w-full after:h-[2px] after:bottom-0 after:left-0 after:bg-primary' : 'text-charcoal/70 hover:text-primary hover-underline-animation'
             }`}
           >
             All Medicines
@@ -115,8 +115,8 @@ export default function MedicineCatalog() {
               key={c}
               type="button"
               onClick={() => setCategory(c)}
-              className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
-                category === c ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-charcoal/70 hover:bg-white/50'
+              className={`whitespace-nowrap relative px-4 py-2.5 text-sm font-medium transition-colors ${
+                category === c ? 'text-primary after:content-[""] after:absolute after:w-full after:h-[2px] after:bottom-0 after:left-0 after:bg-primary' : 'text-charcoal/70 hover:text-primary hover-underline-animation'
               }`}
             >
               {c}
@@ -150,7 +150,7 @@ export default function MedicineCatalog() {
               <Link
                 key={m.id}
                 to={`/medicines/${m.id}`}
-                className="group rounded-[1.5rem] bg-white p-4 shadow-sm hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col relative overflow-hidden border border-charcoal/5"
+                className="group rounded-[1.5rem] bg-white p-4 shadow-sm hover:-translate-y-1 transition-all duration-300 flex flex-col relative overflow-hidden border border-charcoal/5 hover:border-emerald-500 hover:ring-2 hover:ring-emerald-500/50"
               >
                 {/* Wishlist heart button */}
                 <button

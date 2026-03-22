@@ -7,7 +7,9 @@ const orderRoutes = require('./order.routes');
 const paymentRoutes = require('./payment.routes');
 const statsRoutes = require('./stats.routes');
 const prescriptionRoutes = require('./prescription.routes');
+const wishlistRoutes = require('./wishlist.routes');
 const { chat, transcribe } = require('../controllers/chat.controller');
+const contactRoutes = require('./contact.routes');
 
 const router = Router();
 
@@ -19,6 +21,8 @@ router.use('/orders', orderRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/stats', statsRoutes);
 router.use('/prescriptions', prescriptionRoutes);
+router.use('/wishlist', wishlistRoutes);
+router.use('/contact', contactRoutes);
 router.post('/chat', chat);
 router.post('/chat/transcribe', transcribe);
 

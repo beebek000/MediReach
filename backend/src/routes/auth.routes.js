@@ -16,6 +16,7 @@ const {
   verifyResetCodeSchema,
   googleAuthSchema,
   appleAuthSchema,
+  updateProfileSchema,
 } = require("../validators/auth.validator");
 
 const router = Router();
@@ -86,5 +87,12 @@ router.post(
 );
 
 router.get("/me", authenticate, authController.getProfile);
+
+router.patch(
+  "/profile",
+  authenticate,
+  validate(updateProfileSchema),
+  authController.updateProfile,
+);
 
 module.exports = router;

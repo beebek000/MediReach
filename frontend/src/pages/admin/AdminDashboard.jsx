@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import StatCard from '../../components/ui/StatCard';
@@ -29,12 +30,21 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} icon="👥" />
-        <StatCard title="Total Revenue" value={`Rs. ${(stats.totalRevenue / 1000).toFixed(0)}K`} icon="💰" />
-        <StatCard title="Orders Today" value={stats.ordersToday} icon="📋" />
-        <StatCard title="Medicines Listed" value={stats.medicinesListed} icon="💊" />
-        <StatCard title="Active Pharmacists" value={stats.activePharmacists} icon="🏥" />
-        <StatCard title="Pending Prescriptions" value={stats.pendingPrescriptions} icon="📄" />
+        <Link to="/admin/users" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} icon="👥" />
+        </Link>
+        <Link to="/admin/analytics" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Total Revenue" value={`Rs. ${(stats.totalRevenue / 1000).toFixed(0)}K`} icon="💰" />
+        </Link>
+        <Link to="/admin/orders" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Orders Today" value={stats.ordersToday} icon="📋" />
+        </Link>
+        <Link to="/admin/medicines" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Medicines Listed" value={stats.medicinesListed} icon="💊" />
+        </Link>
+        <Link to="/admin/users" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Active Pharmacists" value={stats.activePharmacists} icon="🏥" />
+        </Link>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

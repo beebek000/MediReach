@@ -165,6 +165,15 @@ const authController = {
       next(err);
     }
   },
+  // ──────────────────────────────────────── PATCH /api/auth/profile
+  async updateProfile(req, res, next) {
+    try {
+      const user = await authService.updateProfile(req.user.userId, req.body);
+      return success(res, { user }, 'Profile updated successfully');
+    } catch (err) {
+      next(err);
+    }
+  },
 };
 
 module.exports = authController;

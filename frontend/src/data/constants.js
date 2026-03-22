@@ -30,5 +30,5 @@ export const MEDICINE_CATEGORIES = [
 
 export const PAYMENT_METHODS = [
   { id: "cod", name: "Cash on Delivery", logo: "💵" },
-  { id: "imepay", name: "IME Pay", logo: "📱" },
+  { id: "esewa", name: "eSewa", logo: "https://esewa.com.np/common/images/esewa_logo.png" },
 ];

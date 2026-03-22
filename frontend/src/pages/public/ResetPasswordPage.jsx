@@ -249,7 +249,7 @@ export default function ResetPasswordPage() {
       {/* ── Left Panel ─────────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-1/2 bg-charcoal text-cream flex-col justify-between p-10">
         <Link to="/" className="inline-block">
-          <img src={logo} alt="MediReach Logo" className="h-12 w-auto bg-white p-2 rounded-2xl shadow-sm" />
+          <img src={logo} alt="MediReach Logo" className="h-12 w-auto" />
         </Link>
         <div>
           <p className="font-fraunces text-3xl font-semibold leading-snug">
@@ -291,7 +291,7 @@ export default function ResetPasswordPage() {
             to="/"
             className="lg:hidden mb-6 inline-block"
           >
-            <img src={logo} alt="MediReach Logo" className="h-10 w-auto bg-white p-2 rounded-2xl shadow-sm" />
+            <img src={logo} alt="MediReach Logo" className="h-10 w-auto" />
           </Link>
 
           {success ? (

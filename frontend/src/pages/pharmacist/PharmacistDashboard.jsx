@@ -33,9 +33,15 @@ export default function PharmacistDashboard() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Prescriptions to Verify" value={stats.prescriptionsToVerify} icon="📄" />
-        <StatCard title="Low Stock Alerts" value={stats.lowStockAlerts} icon="⚠️" />
-        <StatCard title="Orders Today" value={stats.ordersToday} icon="📋" />
+        <Link to="/pharmacist/verify" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Prescriptions to Verify" value={stats.prescriptionsToVerify} icon="📄" />
+        </Link>
+        <Link to="/pharmacist/inventory" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Low Stock Alerts" value={stats.lowStockAlerts} icon="⚠️" />
+        </Link>
+        <Link to="/pharmacist/orders" className="block hover:opacity-80 transition-all hover:-translate-y-1">
+          <StatCard title="Orders Today" value={stats.ordersToday} icon="📋" />
+        </Link>
         <StatCard title="Revenue Today" value={`Rs. ${stats.revenueToday.toLocaleString()}`} icon="💰" />
       </div>
 

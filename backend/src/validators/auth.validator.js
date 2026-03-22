@@ -133,6 +133,18 @@ const appleAuthSchema = z.object({
     .optional(),
 });
 
+// ── Update Profile ───────────────────────────────────────────────────────────
+const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be at most 100 characters')
+    .optional(),
+  phone: z.string().max(20).optional(),
+  address: z.string().max(500).optional(),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -143,4 +155,5 @@ module.exports = {
   verifyResetCodeSchema,
   googleAuthSchema,
   appleAuthSchema,
+  updateProfileSchema,
 };

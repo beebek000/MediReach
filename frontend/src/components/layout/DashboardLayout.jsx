@@ -45,7 +45,7 @@ export default function DashboardLayout() {
           <main className="p-4 lg:p-6 page-enter flex-1 flex flex-col">
             <Outlet />
           </main>
-          {showFooterAndBot && <Footer />}
+          {showFooterAndBot && <Footer variant="dark" />}
           {showFooterAndBot && <MediBot />}
         </>
       )}

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../../components/ui/Avatar';
 import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
 
 export default function CustomerProfilePage() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const { addToast } = useToast();
   const [form, setForm] = useState({
     name: user?.name || '',
@@ -13,31 +14,78 @@ export default function CustomerProfilePage() {
     address: user?.address || '',
   });
   const [password, setPassword] = useState({ current: '', new: '', confirm: '' });
+  const [loading, setLoading] = useState(false);
+  const [passLoading, setPassLoading] = useState(false);
   const [notifications, setNotifications] = useState(true);
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    addToast('Profile updated');
+    setLoading(true);
+    try {
+      const res = await api.updateProfile(form, accessToken);
+      if (res.success) {
+        addToast('Profile updated successfully');
+      }
+    } catch (err) {
+      addToast(err.message || 'Failed to update profile', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
+    if (!password.current || !password.new) {
+      addToast('Please fill all password fields', 'error');
+      return;
+    }
     if (password.new !== password.confirm) {
       addToast('Passwords do not match', 'error');
       return;
     }
-    addToast('Password updated');
-    setPassword({ current: '', new: '', confirm: '' });
+    setPassLoading(true);
+    try {
+      const res = await api.changePassword({
+        currentPassword: password.current,
+        newPassword: password.new
+      }, accessToken);
+      
+      if (res.success) {
+        addToast('Password updated successfully');
+        setPassword({ current: '', new: '', confirm: '' });
+      }
+    } catch (err) {
+      addToast(err.message || 'Failed to update password', 'error');
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    try {
+      const res = await api.request('/auth/test-email', { token: accessToken });
+      if (res.success) addToast('Debug email sent! Check your inbox.');
+    } catch (err) {
+      addToast('Failed to send debug email', 'error');
+    }
   };
 
   return (
     <div className="max-w-2xl space-y-8 page-enter">
-      <div className="flex items-center gap-4">
-        <Avatar name={user?.name} size="lg" />
-        <div>
-          <h2 className="font-fraunces text-xl font-semibold text-charcoal">{user?.name}</h2>
-          <p className="text-charcoal/60">{user?.email}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Avatar name={user?.name} size="lg" />
+          <div>
+            <h2 className="font-fraunces text-xl font-semibold text-charcoal">{user?.name}</h2>
+            <p className="text-charcoal/60">{user?.email}</p>
+          </div>
         </div>
+        <button 
+          onClick={handleTestEmail}
+          className="text-xs bg-charcoal/5 hover:bg-charcoal/10 text-charcoal/60 px-3 py-1.5 rounded-full transition-colors"
+        >
+          Send Test Email (Debug)
+        </button>
       </div>
 
       <form onSubmit={handleSaveProfile} className="rounded-xl border border-charcoal/10 bg-white p-6 space-y-4">
@@ -78,13 +126,21 @@ export default function CustomerProfilePage() {
             className="w-full rounded-lg border border-charcoal/20 px-4 py-2.5 focus:border-primary outline-none resize-none"
           />
         </div>
-        <button type="submit" className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark">
-          Save changes
+        <button 
+          type="submit" 
+          disabled={loading}
+          className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark disabled:opacity-50"
+        >
+          {loading ? 'Saving...' : 'Save changes'}
         </button>
       </form>
 
       <form onSubmit={handleChangePassword} className="rounded-xl border border-charcoal/10 bg-white p-6 space-y-4">
         <h3 className="font-fraunces font-semibold text-charcoal">Change password</h3>
+        
+        {/* Hidden username field helps browsers correctly associate the password change */}
+        <input type="text" name="username" value={user?.email || ''} readOnly className="hidden" autoComplete="username" />
+        
         <div>
           <label className="block text-sm font-medium text-charcoal mb-1">Current password</label>
           <input
@@ -92,6 +148,8 @@ export default function CustomerProfilePage() {
             value={password.current}
             onChange={(e) => setPassword((p) => ({ ...p, current: e.target.value }))}
             className="w-full rounded-lg border border-charcoal/20 px-4 py-2.5 focus:border-primary outline-none"
+            autoComplete="current-password"
+            required
           />
         </div>
         <div>
@@ -101,6 +159,8 @@ export default function CustomerProfilePage() {
             value={password.new}
             onChange={(e) => setPassword((p) => ({ ...p, new: e.target.value }))}
             className="w-full rounded-lg border border-charcoal/20 px-4 py-2.5 focus:border-primary outline-none"
+            autoComplete="new-password"
+            required
           />
         </div>
         <div>
@@ -110,10 +170,16 @@ export default function CustomerProfilePage() {
             value={password.confirm}
             onChange={(e) => setPassword((p) => ({ ...p, confirm: e.target.value }))}
             className="w-full rounded-lg border border-charcoal/20 px-4 py-2.5 focus:border-primary outline-none"
+            autoComplete="new-password"
+            required
           />
         </div>
-        <button type="submit" className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark">
-          Update password
+        <button 
+          type="submit" 
+          disabled={passLoading}
+          className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark disabled:opacity-50"
+        >
+          {passLoading ? 'Updating...' : 'Update password'}
         </button>
       </form>
 

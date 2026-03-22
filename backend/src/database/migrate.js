@@ -118,7 +118,7 @@ const migrate = async () => {
       CREATE INDEX IF NOT EXISTS idx_medicines_category ON medicines (category);
     `);
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_medicines_name ON medicines (name);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_medicines_name ON medicines (name);
     `);
 
     // ── Auto-update updated_at trigger ───────────────────────────────
@@ -165,6 +165,14 @@ const migrate = async () => {
 
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_prescriptions_user_id ON prescriptions (user_id);
+    `);
+
+    // Add used column if it doesn't exist (for existing databases)
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS used BOOLEAN NOT NULL DEFAULT FALSE;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
     `);
 
     await client.query(`
@@ -234,7 +242,7 @@ const migrate = async () => {
         delivery_fee     DECIMAL(12,2)   NOT NULL DEFAULT 0,
         grand_total      DECIMAL(12,2)   NOT NULL DEFAULT 0,
         payment_method   VARCHAR(20)     NOT NULL DEFAULT 'cod'
-                           CHECK (payment_method IN ('cod', 'esewa')),
+                           CHECK (payment_method IN ('cod', 'esewa', 'stripe')),
         payment_status   VARCHAR(20)     NOT NULL DEFAULT 'pending'
                            CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
         shipping_address TEXT,
@@ -296,7 +304,7 @@ const migrate = async () => {
         id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         order_id          UUID            NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
         method            VARCHAR(20)     NOT NULL
-                            CHECK (method IN ('cod', 'esewa')),
+                            CHECK (method IN ('cod', 'esewa', 'stripe')),
         amount            DECIMAL(12,2)   NOT NULL,
         status            VARCHAR(20)     NOT NULL DEFAULT 'pending'
                             CHECK (status IN ('pending', 'success', 'failed', 'refunded')),
@@ -322,6 +330,86 @@ const migrate = async () => {
         BEFORE UPDATE ON payments
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
+    `);
+
+    // ── Payment Webhook Events table (idempotency + audit) ──────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS payment_webhook_events (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        provider          VARCHAR(30)     NOT NULL,
+        provider_event_id VARCHAR(255)    NOT NULL UNIQUE,
+        event_type        VARCHAR(120)    NOT NULL,
+        status            VARCHAR(20)     NOT NULL DEFAULT 'received'
+                            CHECK (status IN ('received', 'processed', 'failed', 'ignored')),
+        payload           JSONB,
+        error_message     TEXT,
+        processed_at      TIMESTAMPTZ,
+        created_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+        updated_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_payment_webhook_events_provider_event
+      ON payment_webhook_events (provider, provider_event_id);
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_payment_webhook_events_status
+      ON payment_webhook_events (status);
+    `);
+
+    await client.query(`
+      DROP TRIGGER IF EXISTS set_payment_webhook_events_updated_at ON payment_webhook_events;
+      CREATE TRIGGER set_payment_webhook_events_updated_at
+        BEFORE UPDATE ON payment_webhook_events
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    `);
+
+    // ── Wishlists table ─────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS wishlists (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id       UUID          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        medicine_id   UUID          NOT NULL REFERENCES medicines(id) ON DELETE CASCADE,
+        created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, medicine_id)
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_wishlists_user_id ON wishlists (user_id);
+    `);
+
+    // --- Patch existing constraints for payment method updates ---
+    await client.query(`
+      ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_payment_method_check;
+      ALTER TABLE orders ADD CONSTRAINT orders_payment_method_check CHECK (payment_method IN ('cod', 'esewa', 'stripe'));
+      
+      ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_method_check;
+      ALTER TABLE payments ADD CONSTRAINT payments_method_check CHECK (method IN ('cod', 'esewa', 'stripe'));
+    `);
+
+    // ── Contact Messages table ─────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS contact_messages (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name          VARCHAR(150)  NOT NULL,
+        email         VARCHAR(255)  NOT NULL,
+        message       TEXT          NOT NULL,
+        status        VARCHAR(20)   NOT NULL DEFAULT 'unread'
+                        CHECK (status IN ('unread', 'read', 'resolved')),
+        created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages (status);
+    `);
+    
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages (created_at DESC);
     `);
 
     await client.query('COMMIT');
