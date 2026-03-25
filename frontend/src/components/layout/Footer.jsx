@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from '../../assets/images/logo.png';
+import logo from "../../assets/images/logo.png";
 
 const footerLinks = {
   company: [
@@ -31,8 +31,15 @@ export default function Footer({ variant = "light" }) {
       <div className="max-w-6xl mx-auto px-4 py-10 lg:py-12 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-1 sm:col-span-2 md:col-span-1 flex flex-col items-center md:items-start text-center md:text-left">
-            <Link to="/" className="inline-block mb-3 transition-transform hover:scale-105">
-              <img src={logo} alt="MediReach Logo" className="h-16 sm:h-20 w-auto" />
+            <Link
+              to="/"
+              className="inline-block mb-3 transition-transform hover:scale-105"
+            >
+              <img
+                src={logo}
+                alt="MediReach Logo"
+                className="h-16 sm:h-20 w-auto"
+              />
             </Link>
             <p
               className={`mt-2 text-sm ${isDark ? "text-cream/70" : "text-charcoal/60"}`}
@@ -40,7 +47,9 @@ export default function Footer({ variant = "light" }) {
               Nepal's trusted online pharmacy. Medicines delivered to your door.
             </p>
           </div>
-          <div>
+          <div
+            className={`p-4 rounded-lg border ${isDark ? "bg-white/5 border-white/10" : "bg-white border-charcoal/20"}`}
+          >
             <h4
               className={`font-fraunces font-semibold ${isDark ? "text-cream" : "text-charcoal"}`}
             >
@@ -59,7 +68,9 @@ export default function Footer({ variant = "light" }) {
               ))}
             </ul>
           </div>
-          <div>
+          <div
+            className={`p-4 rounded-lg border ${isDark ? "bg-white/5 border-white/10" : "bg-white border-charcoal/20"}`}
+          >
             <h4
               className={`font-fraunces font-semibold ${isDark ? "text-cream" : "text-charcoal"}`}
             >
@@ -78,7 +89,9 @@ export default function Footer({ variant = "light" }) {
               ))}
             </ul>
           </div>
-          <div>
+          <div
+            className={`p-4 rounded-lg border ${isDark ? "bg-white/5 border-white/10" : "bg-white border-charcoal/20"}`}
+          >
             <h4
               className={`font-fraunces font-semibold ${isDark ? "text-cream" : "text-charcoal"}`}
             >
@@ -101,6 +114,25 @@ export default function Footer({ variant = "light" }) {
           >
             © {new Date().getFullYear()} MediReach. All rights reserved.
           </p>
+          <div className="flex items-center gap-3">
+            <h5
+              className={`text-sm font-semibold ${isDark ? "text-cream/80" : "text-charcoal/70"}`}
+            >
+              Payment Methods:
+            </h5>
+            <div className="flex items-center gap-2">
+              <img
+                src="/src/assets/images/esewa.png"
+                alt="eSewa"
+                className="h-6 w-auto object-contain"
+              />
+              <img
+                src="/src/assets/images/cod_logo.jpg"
+                alt="Cash on Delivery"
+                className="h-6 w-auto object-contain"
+              />
+            </div>
+          </div>
           <div className="flex gap-6">
             {footerLinks.legal.map((item) => (
               <Link

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useToast } from '../../context/ToastContext';
+import { useToast } from "../../context/ToastContext";
 import ProgressBar from "../../components/ui/ProgressBar";
-import logo from '../../assets/images/logo.png';
-import authVideo from '../../assets/videos/new-video.mp4';
+import logo from "../../assets/images/logo.png";
+import authVideo from "../../assets/videos/new-video.mp4";
 
 const STEPS = [
   { id: 1, title: "Personal Info", fields: ["name", "email", "password"] },
@@ -123,11 +123,11 @@ export default function RegisterPage() {
         const result = await loginWithGoogle(response.credential);
         setOauthLoading("");
         if (result.success) {
-          addToast('Signed up with Google successfully');
+          addToast("Signed up with Google successfully");
           redirectAfterAuth(result.user.role);
         } else {
-          setErrors({ submit: result.error || 'Google sign-up failed' });
-          addToast(result.error || 'Google sign-up failed', 'error');
+          setErrors({ submit: result.error || "Google sign-up failed" });
+          addToast(result.error || "Google sign-up failed", "error");
         }
       },
     });
@@ -169,16 +169,16 @@ export default function RegisterPage() {
           : undefined,
       });
       if (result.success) {
-        addToast('Signed up with Apple successfully');
+        addToast("Signed up with Apple successfully");
         redirectAfterAuth(result.user.role);
       } else {
-        setErrors({ submit: result.error || 'Apple sign-up failed' });
-        addToast(result.error || 'Apple sign-up failed', 'error');
+        setErrors({ submit: result.error || "Apple sign-up failed" });
+        addToast(result.error || "Apple sign-up failed", "error");
       }
     } catch (err) {
-      if (err?.error !== 'popup_closed_by_user') {
-        setErrors({ submit: err.message || 'Apple sign-up failed' });
-        addToast(err.message || 'Apple sign-up failed', 'error');
+      if (err?.error !== "popup_closed_by_user") {
+        setErrors({ submit: err.message || "Apple sign-up failed" });
+        addToast(err.message || "Apple sign-up failed", "error");
       }
     } finally {
       setOauthLoading("");
@@ -211,15 +211,15 @@ export default function RegisterPage() {
       try {
         const result = await register(form);
         if (result.success) {
-          addToast('Account created successfully! Welcome to MediReach.');
-          navigate('/customer');
+          addToast("Account created successfully! Welcome to MediReach.");
+          navigate("/customer");
         } else {
           setErrors({ submit: result.error });
-          addToast(result.error || 'Registration failed', 'error');
+          addToast(result.error || "Registration failed", "error");
         }
       } catch {
-        setErrors({ submit: 'Registration failed. Please try again.' });
-        addToast('Registration failed. Please try again.', 'error');
+        setErrors({ submit: "Registration failed. Please try again." });
+        addToast("Registration failed. Please try again.", "error");
       } finally {
         setLoading(false);
       }
@@ -232,6 +232,11 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex">
+      {/* Logo at top left corner */}
+      <Link to="/" className="fixed top-6 left-6 z-50 inline-block">
+        <img src={logo} alt="MediReach Logo" className="h-16 w-auto" />
+      </Link>
+
       {/* ── Left Panel ──────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-1/2 bg-charcoal text-cream flex-col justify-between p-12 relative overflow-hidden">
         {/* Full screen background video */}
@@ -246,10 +251,7 @@ export default function RegisterPage() {
         </video>
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent z-0"></div>
 
-        <Link to="/" className="inline-block relative z-10 -mt-2">
-          <img src={logo} alt="MediReach Logo" className="h-16 md:h-20 w-auto" />
-        </Link>
-        <div className="relative z-10 flex-1 flex flex-col justify-end pb-12">
+        <div className="relative z-10 mb-10 flex-1 flex flex-col justify-end">
           <p className="font-fraunces text-4xl font-bold leading-tight drop-shadow-lg">
             Create your account
           </p>
@@ -311,7 +313,10 @@ export default function RegisterPage() {
       <div className="w-full lg:w-1/2 flex flex-col justify-center p-4 sm:p-8 lg:p-12 bg-gradient-to-br from-cream to-white relative overflow-hidden">
         {/* Soft decorative background blurs for the light side */}
         <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full mix-blend-multiply filter blur-[120px] opacity-70 animate-pulse-slow pointer-events-none" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-secondary/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-pulse-slow pointer-events-none" style={{ animationDelay: "2s" }} />
+        <div
+          className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-secondary/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-pulse-slow pointer-events-none"
+          style={{ animationDelay: "2s" }}
+        />
 
         <div className="max-w-xl w-full mx-auto relative z-10 bg-white/70 backdrop-blur-xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-white rounded-[2rem] p-8 sm:p-10 transition-all duration-500 hover:shadow-[0_8px_50px_rgba(0,0,0,0.06)]">
           {/* Mobile logo */}
@@ -319,7 +324,11 @@ export default function RegisterPage() {
             to="/"
             className="lg:hidden mb-6 -mt-1 flex justify-center w-full"
           >
-            <img src={logo} alt="MediReach Logo" className="h-12 sm:h-14 w-auto" />
+            <img
+              src={logo}
+              alt="MediReach Logo"
+              className="h-12 sm:h-14 w-auto"
+            />
           </Link>
 
           <div className="text-center lg:text-left mb-6">
@@ -396,10 +405,12 @@ export default function RegisterPage() {
                     placeholder="Enter your full name"
                   />
                   {errors.name && (
-                    <p className="text-sm text-soft-red mt-1 pl-1">{errors.name}</p>
+                    <p className="text-sm text-soft-red mt-1 pl-1">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-charcoal mb-1.5 pl-1">
                     Email
@@ -415,10 +426,12 @@ export default function RegisterPage() {
                     placeholder="you@example.com"
                   />
                   {errors.email && (
-                    <p className="text-sm text-soft-red mt-1 pl-1">{errors.email}</p>
+                    <p className="text-sm text-soft-red mt-1 pl-1">
+                      {errors.email}
+                    </p>
                   )}
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-charcoal mb-1.5 pl-1">
                     Password
@@ -461,7 +474,9 @@ export default function RegisterPage() {
                   Phone Number
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/50 font-medium">+977</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/50 font-medium">
+                    +977
+                  </span>
                   <input
                     type="tel"
                     value={form.phone}
@@ -474,7 +489,9 @@ export default function RegisterPage() {
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-sm text-soft-red mt-1 pl-1">{errors.phone}</p>
+                  <p className="text-sm text-soft-red mt-1 pl-1">
+                    {errors.phone}
+                  </p>
                 )}
               </div>
               <div>
@@ -492,7 +509,9 @@ export default function RegisterPage() {
                   placeholder="Street, City, District"
                 />
                 {errors.address && (
-                  <p className="text-sm text-soft-red mt-1 pl-1">{errors.address}</p>
+                  <p className="text-sm text-soft-red mt-1 pl-1">
+                    {errors.address}
+                  </p>
                 )}
               </div>
             </div>
