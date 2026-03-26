@@ -36,7 +36,6 @@ import MyOrdersPage from "./pages/customer/MyOrdersPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
 import EsewaSuccessPage from "./pages/customer/EsewaSuccessPage";
 import EsewaFailurePage from "./pages/customer/EsewaFailurePage";
-import EsewaMockCheckoutPage from "./pages/customer/EsewaMockCheckoutPage";
 import WishlistPage from "./pages/customer/WishlistPage";
 
 import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
@@ -142,11 +141,6 @@ const router = createBrowserRouter([
         path: "payment/esewa/failure",
         element: <EsewaFailurePage />,
         handle: { title: "eSewa Payment" },
-      },
-      {
-        path: "payment/esewa/mock-checkout",
-        element: <EsewaMockCheckoutPage />,
-        handle: { title: "eSewa Checkout" },
       },
     ],
   },

@@ -32,28 +32,18 @@ export default function CartCheckoutPage() {
     api.initiateEsewa({ orderId: esewaPendingOrder.id }, accessToken)
       .then((payRes) => {
         const form = payRes.data;
-        const isLocalMock =
-          form.mock ||
-          new URL(form.paymentUrl, window.location.origin).origin === window.location.origin;
-        if (isLocalMock) {
-          // Navigate with query params for local mock page (SPA can't receive form POSTs)
-          const params = new URLSearchParams(form.formData).toString();
-          window.location.href = `${form.paymentUrl}?${params}`;
-        } else {
-          // Real eSewa: submit a hidden form via POST
-          const esewaForm = document.createElement('form');
-          esewaForm.method = 'POST';
-          esewaForm.action = form.paymentUrl;
-          Object.entries(form.formData).forEach(([key, val]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = String(val);
-            esewaForm.appendChild(input);
-          });
-          document.body.appendChild(esewaForm);
-          esewaForm.submit();
-        }
+        const esewaForm = document.createElement('form');
+        esewaForm.method = 'POST';
+        esewaForm.action = form.paymentUrl;
+        Object.entries(form.formData).forEach(([key, val]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = String(val);
+          esewaForm.appendChild(input);
+        });
+        document.body.appendChild(esewaForm);
+        esewaForm.submit();
       })
       .catch((err) => {
         setEsewaRedirecting(false);
@@ -144,26 +134,18 @@ export default function CartCheckoutPage() {
                   api.initiateEsewa({ orderId: esewaPendingOrder.id }, accessToken)
                     .then((payRes) => {
                       const form = payRes.data;
-                      const isLocalMock =
-                        form.mock ||
-                        new URL(form.paymentUrl, window.location.origin).origin === window.location.origin;
-                      if (isLocalMock) {
-                        const params = new URLSearchParams(form.formData).toString();
-                        window.location.href = `${form.paymentUrl}?${params}`;
-                      } else {
-                        const esewaForm = document.createElement('form');
-                        esewaForm.method = 'POST';
-                        esewaForm.action = form.paymentUrl;
-                        Object.entries(form.formData).forEach(([key, val]) => {
-                          const input = document.createElement('input');
-                          input.type = 'hidden';
-                          input.name = key;
-                          input.value = String(val);
-                          esewaForm.appendChild(input);
-                        });
-                        document.body.appendChild(esewaForm);
-                        esewaForm.submit();
-                      }
+                      const esewaForm = document.createElement('form');
+                      esewaForm.method = 'POST';
+                      esewaForm.action = form.paymentUrl;
+                      Object.entries(form.formData).forEach(([key, val]) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = String(val);
+                        esewaForm.appendChild(input);
+                      });
+                      document.body.appendChild(esewaForm);
+                      esewaForm.submit();
                     })
                     .catch((err) => {
                       setEsewaRedirecting(false);

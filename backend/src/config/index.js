@@ -41,9 +41,12 @@ module.exports = {
     productCode: process.env.ESEWA_PRODUCT_CODE || 'EPAYTEST',
     successPath: process.env.ESEWA_SUCCESS_PATH || '/api/payments/esewa/success',
     failurePath: process.env.ESEWA_FAILURE_PATH || '/api/payments/esewa/failure',
-    secretKey: process.env.ESEWA_SECRET_KEY || '8g7h39H6Bh7973GF',
+    secretKey: (process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q').trim(),
     initiateUrl: process.env.ESEWA_INITIATE_URL || 'https://uat.esewa.com.np/epay/main',
-    verifyUrl: process.env.ESEWA_VERIFY_URL || 'https://uat.esewa.com.np/api/epay/transaction/status/',
+    verifyUrl:
+      process.env.ESEWA_VERIFY_URL ||
+      process.env.ESEWA_STATUS_URL ||
+      'https://uat.esewa.com.np/api/epay/transaction/status/',
   },
 
   // ── Google OAuth 2.0 ──────────────────────────────────────────────
