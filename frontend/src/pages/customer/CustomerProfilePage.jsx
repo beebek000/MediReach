@@ -61,15 +61,6 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const handleTestEmail = async () => {
-    try {
-      const res = await api.request('/auth/test-email', { token: accessToken });
-      if (res.success) addToast('Debug email sent! Check your inbox.');
-    } catch (err) {
-      addToast('Failed to send debug email', 'error');
-    }
-  };
-
   return (
     <div className="max-w-2xl space-y-8 page-enter">
       <div className="flex items-center justify-between">
@@ -78,14 +69,10 @@ export default function CustomerProfilePage() {
           <div>
             <h2 className="font-fraunces text-xl font-semibold text-charcoal">{user?.name}</h2>
             <p className="text-charcoal/60">{user?.email}</p>
+            {user?.phone && <p className="text-charcoal/60 text-sm mt-0.5 flex items-center gap-1.5"><span className="opacity-50">📱</span> {user.phone}</p>}
+            {user?.address && <p className="text-charcoal/60 text-sm flex items-center gap-1.5"><span className="opacity-50">📍</span> {user.address}</p>}
           </div>
         </div>
-        <button 
-          onClick={handleTestEmail}
-          className="text-xs bg-charcoal/5 hover:bg-charcoal/10 text-charcoal/60 px-3 py-1.5 rounded-full transition-colors"
-        >
-          Send Test Email (Debug)
-        </button>
       </div>
 
       <form onSubmit={handleSaveProfile} className="rounded-xl border border-charcoal/10 bg-white p-6 space-y-4">
@@ -183,18 +170,20 @@ export default function CustomerProfilePage() {
         </button>
       </form>
 
-      <div className="rounded-xl border border-charcoal/10 bg-white p-6">
-        <h3 className="font-fraunces font-semibold text-charcoal mb-3">Notification preferences</h3>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={notifications}
-            onChange={(e) => setNotifications(e.target.checked)}
-            className="rounded text-primary"
-          />
-          <span className="text-sm text-charcoal">Email me order updates and offers</span>
-        </label>
-      </div>
+      {user?.role === 'customer' && (
+        <div className="rounded-xl border border-charcoal/10 bg-white p-6">
+          <h3 className="font-fraunces font-semibold text-charcoal mb-3">Notification preferences</h3>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={notifications}
+              onChange={(e) => setNotifications(e.target.checked)}
+              className="rounded text-primary"
+            />
+            <span className="text-sm text-charcoal">Email me order updates and offers</span>
+          </label>
+        </div>
+      )}
     </div>
   );
 }

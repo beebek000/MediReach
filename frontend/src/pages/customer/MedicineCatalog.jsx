@@ -184,18 +184,20 @@ export default function MedicineCatalog() {
                   <div className={`h-full w-full items-center justify-center text-5xl opacity-50 ${imageSrc ? 'hidden' : 'flex'}`}>💊</div>
                   
                   {/* Quick Add overlay */}
-                  <div className="absolute inset-0 bg-charcoal/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={(e) => handleAddToCart(e, m)}
-                      className="rounded-full bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark transition-all transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 duration-300 flex items-center gap-2 shadow-lg hover:shadow-primary/50"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      Quick Add
-                    </button>
-                  </div>
+                  {m.stock > 0 && (
+                    <div className="absolute inset-0 bg-charcoal/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={(e) => handleAddToCart(e, m)}
+                        className="rounded-full bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark transition-all transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 duration-300 flex items-center gap-2 shadow-lg hover:shadow-primary/50"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Quick Add
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col flex-1 px-1">
@@ -210,7 +212,11 @@ export default function MedicineCatalog() {
                       <span className="font-fraunces text-xl font-bold text-primary">Rs. {m.price}</span>
                     </div>
                     <div className="flex items-center gap-1.5 pb-1">
-                      {m.stock < 20 && <Badge variant="amber">Low stock</Badge>}
+                      {m.stock === 0 ? (
+                        <Badge variant="charcoal">Out of stock</Badge>
+                      ) : (
+                        m.stock < 20 && <Badge variant="amber">Low stock</Badge>
+                      )}
                       {m.requiresPrescription && <Badge variant="soft-red">Rx</Badge>}
                     </div>
                   </div>

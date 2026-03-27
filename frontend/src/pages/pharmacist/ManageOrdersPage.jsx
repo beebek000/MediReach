@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ORDER_STATUSES } from '../../data/constants';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -96,6 +97,14 @@ export default function ManageOrdersPage() {
                           <option key={s} value={s}>{s.replace('_', ' ')}</option>
                         ))}
                       </select>
+                      {o.status === 'shipped' && (
+                        <Link
+                          to={`/pharmacist/orders/${o.id}/track`}
+                          className="ml-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                        >
+                          <span className="text-sm">🛵</span> Track
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

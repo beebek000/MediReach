@@ -42,6 +42,7 @@ import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
 import InventoryManagementPage from "./pages/pharmacist/InventoryManagementPage";
 import VerifyPrescriptionsPage from "./pages/pharmacist/VerifyPrescriptionsPage";
 import ManageOrdersPage from "./pages/pharmacist/ManageOrdersPage";
+import RiderTrackingPage from "./pages/pharmacist/RiderTrackingPage";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AnalyticsPage from "./pages/admin/AnalyticsPage";
@@ -172,6 +173,11 @@ const router = createBrowserRouter([
         path: "orders",
         element: <ManageOrdersPage />,
         handle: { title: "Manage Orders" },
+      },
+      {
+        path: "orders/:id/track",
+        element: <RiderTrackingPage />,
+        handle: { title: "Track Delivery" },
       },
       {
         path: "profile",

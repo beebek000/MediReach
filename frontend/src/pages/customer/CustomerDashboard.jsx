@@ -52,8 +52,8 @@ export default function CustomerDashboard() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Orders" value={stats.totalOrders} icon="📋" />
-        <StatCard title="Prescriptions" value={stats.prescriptions} icon="📄" />
+        <StatCard title="Total Orders" value={stats.totalOrders} icon="📋" to="/customer/orders" />
+        <StatCard title="Prescriptions" value={stats.prescriptions} icon="📄" to="/customer/prescriptions" />
         <StatCard title="In Transit" value={stats.inTransit} icon="🚚" />
         <StatCard
           title="Total Spent"

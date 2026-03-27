@@ -70,14 +70,6 @@ export default function OrderTrackingPage() {
     return () => clearInterval(interval);
   }, [orderId, order?.status, accessToken]);
 
-  const handleLocationUpdate = useCallback(
-    ({ lat, lng }) => {
-      if (!orderId) return;
-      api.updateDeliveryLocation(orderId, { lat, lng }, accessToken).catch(() => {});
-    },
-    [orderId, accessToken]
-  );
-
   const statusIndex = order ? TRACK_STEPS.indexOf(order.status) : -1;
   const isCancelled = order?.status === 'cancelled';
   const isPrescriptionReview = order?.status === 'prescription_review';
@@ -172,17 +164,18 @@ export default function OrderTrackingPage() {
           )}
 
           <LiveTrackingMap
-              orderId={orderId}
-              orderStatus={order.status}
-              deliveryLat={tracking?.deliveryLat ?? order.deliveryLat}
-              deliveryLng={tracking?.deliveryLng ?? order.deliveryLng}
-              destinationLat={tracking?.destinationLat ?? order.destinationLat}
-              destinationLng={tracking?.destinationLng ?? order.destinationLng}
-              shippingAddress={order.shippingAddress}
-              onLocationUpdate={handleLocationUpdate}
-            />
+            orderId={orderId}
+            orderStatus={order.status}
+            deliveryLat={tracking?.deliveryLat ?? order.deliveryLat}
+            deliveryLng={tracking?.deliveryLng ?? order.deliveryLng}
+            destinationLat={tracking?.destinationLat ?? order.destinationLat}
+            destinationLng={tracking?.destinationLng ?? order.destinationLng}
+            shippingAddress={order.shippingAddress}
+            readOnly={true}
+          />
         </>
       )}
     </div>
   );
 }
+

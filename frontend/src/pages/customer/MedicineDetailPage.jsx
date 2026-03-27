@@ -123,7 +123,11 @@ export default function MedicineDetailPage() {
               <p className="text-charcoal/60 mt-1">{medicine.manufacturer} • {medicine.category}</p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {medicine.requiresPrescription && <Badge variant="soft-red">Prescription required</Badge>}
-                {medicine.stock < 20 && <Badge variant="amber">Low stock</Badge>}
+                {medicine.stock === 0 ? (
+                  <Badge variant="charcoal">Out of stock</Badge>
+                ) : (
+                  medicine.stock < 20 && <Badge variant="amber">Low stock</Badge>
+                )}
               </div>
             </div>
           </div>
@@ -137,24 +141,28 @@ export default function MedicineDetailPage() {
             <span>Sold: {(medicine.soldCount ?? 0).toLocaleString()}</span>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-charcoal">Qty:</label>
-              <input
-                type="number"
-                min={1}
-                max={medicine.stock}
-                value={qty}
-                onChange={(e) => setQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 rounded-lg border border-charcoal/20 px-2 py-1.5 text-center"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark transition-colors"
-            >
-              Add to Cart
-            </button>
+            {medicine.stock > 0 ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-charcoal">Qty:</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={medicine.stock}
+                    value={qty}
+                    onChange={(e) => setQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    className="w-20 rounded-lg border border-charcoal/20 px-2 py-1.5 text-center"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-dark transition-colors"
+                >
+                  Add to Cart
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               onClick={handleToggleWishlist}

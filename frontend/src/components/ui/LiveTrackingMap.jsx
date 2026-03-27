@@ -128,6 +128,7 @@ export default function LiveTrackingMap({
   destinationLng,
   shippingAddress,
   onLocationUpdate,
+  readOnly = true,
 }) {
   const [riderPos, setRiderPos] = useState(
     deliveryLat && deliveryLng ? [deliveryLat, deliveryLng] : null
@@ -150,13 +151,13 @@ export default function LiveTrackingMap({
     }
   }, [deliveryLat, deliveryLng]);
 
-  /* ── Simulate delivery movement when order is shipped ───────── */
+  /* ── Simulate delivery movement (Only if NOT readOnly and status is shipped) ── */
   const simulateDelivery = useCallback(() => {
-    if (simulationRef.current) return; // already running
+    if (readOnly || simulationRef.current) return;
 
     const origin = riderPos || PHARMACY_LOCATION;
     const dest = effectiveDest;
-    const totalSteps = 120; // ~2 min full simulation
+    const totalSteps = 120;
     stepRef.current = 0;
 
     simulationRef.current = setInterval(() => {
@@ -170,27 +171,43 @@ export default function LiveTrackingMap({
         return;
       }
 
-      // Add slight randomness for realistic movement
       const jitter = () => (Math.random() - 0.5) * 0.0003;
       const lat = origin[0] + (dest[0] - origin[0]) * t + jitter();
       const lng = origin[1] + (dest[1] - origin[1]) * t + jitter();
 
       setRiderPos([lat, lng]);
 
-      // Report location updates
       if (onLocationUpdate && stepRef.current % 5 === 0) {
         onLocationUpdate({ lat, lng });
       }
     }, 1000);
-  }, [riderPos, effectiveDest, onLocationUpdate]);
+  }, [readOnly, riderPos, effectiveDest, onLocationUpdate]);
 
-  // Start/stop simulation based on order status
+  // Handle map click for manual updates (Only if NOT readOnly)
+  const MapClickHandler = () => {
+    const map = useMap();
+    useEffect(() => {
+      if (readOnly) return;
+      const onClick = (e) => {
+        const { lat, lng } = e.latlng;
+        setRiderPos([lat, lng]);
+        if (onLocationUpdate) {
+          onLocationUpdate({ lat, lng });
+        }
+      };
+      map.on('click', onClick);
+      return () => map.off('click', onClick);
+    }, [map]);
+    return null;
+  };
+
   useEffect(() => {
-    if (orderStatus === 'shipped') {
+    // Only run simulation if specifically requested and NOT readOnly
+    // For now, we'll keep it disabled by default even if shipped if readOnly is true
+    if (orderStatus === 'shipped' && !readOnly) {
       if (!riderPos) {
         setRiderPos(PHARMACY_LOCATION);
       }
-      // Small delay then start simulation
       const timer = setTimeout(simulateDelivery, 1500);
       return () => clearTimeout(timer);
     }
@@ -201,7 +218,7 @@ export default function LiveTrackingMap({
         simulationRef.current = null;
       }
     };
-  }, [orderStatus, simulateDelivery]);
+  }, [orderStatus, readOnly, simulateDelivery]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -286,6 +303,7 @@ export default function LiveTrackingMap({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          <MapClickHandler />
           <AutoFitBounds positions={allPositions} />
 
           {/* Pharmacy origin */}
